@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MTR Race · English Team Game</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#24232b; --muted:#6d6a76; --cream:#fbf6ee; --paper:#fff; --line:#0075c2;
+  --red:#e2231a; --blue:#0075c2; --green:#00a040; --purple:#7e3c93; --pink:#f08aa0; --gold:#f5b700;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:"Nunito",system-ui,sans-serif;background:var(--cream);color:var(--ink);overflow:hidden}
+button{font-family:inherit;cursor:pointer;border:none}
+.app{height:100vh;display:grid;grid-template-rows:auto auto 1fr;gap:1vh;padding:1.2vh 1.6vw}
+
+/* header */
+header{display:flex;align-items:center;gap:1.2vw}
+.logo{font-family:"Baloo 2","Nunito",system-ui,sans-serif;font-weight:800;font-size:clamp(20px,2.6vw,40px);line-height:1;display:flex;align-items:center;gap:.4em}
+.logo small{font-family:Nunito;font-size:.42em;color:var(--muted);font-weight:700;display:block}
+.tabs{display:flex;gap:.5vw;margin-left:auto;background:#fff;padding:5px;border-radius:999px;box-shadow:0 2px 0 rgba(0,0,0,.06)}
+.tab{background:transparent;padding:.55em 1.1em;border-radius:999px;font-weight:900;font-size:clamp(12px,1.15vw,18px);color:var(--muted)}
+.tab.on{background:var(--ink);color:#fff}
+.iconbtn{background:#fff;width:2.4em;height:2.4em;border-radius:50%;font-size:clamp(14px,1.3vw,20px);box-shadow:0 2px 0 rgba(0,0,0,.08)}
+
+/* board */
+.board{background:#fff;border-radius:22px;padding:1.2vh 1.4vw 0.6vh;box-shadow:0 4px 0 rgba(0,0,0,.05)}
+.lane{display:grid;grid-template-columns:minmax(230px,22vw) 1fr;align-items:center;gap:1vw;height:6.2vh;min-height:40px}
+.team{display:flex;align-items:center;gap:.5vw}
+.tname{font-weight:900;font-size:clamp(12px,1.1vw,18px);text-overflow:ellipsis;max-width:9em;outline:none;padding:2px 6px;border-radius:8px;min-width:4em;white-space:nowrap;overflow:hidden}
+.tname:focus{background:#f3efe7}
+.pts{display:flex;gap:4px;margin-left:auto}
+.pts button{width:2.1em;height:2.1em;border-radius:10px;font-weight:900;font-size:clamp(11px,1vw,16px);background:#f3efe7;color:var(--ink)}
+.pts button.plus{color:#fff}
+.track{position:relative;height:100%}
+.track::before{content:"";position:absolute;left:2%;right:2%;top:50%;height:6px;transform:translateY(-50%);background:var(--line);border-radius:6px;opacity:.85}
+.stop{position:absolute;top:50%;width:14px;height:14px;margin-left:-7px;transform:translateY(-50%);border-radius:50%;background:#fff;border:3px solid var(--line)}
+.stop.sp{border-color:var(--gold);background:var(--gold)}
+.stop.bad{border-color:var(--red);background:var(--red)}
+.stop.fin{width:22px;height:22px;margin-left:-11px;border:5px solid var(--ink)}
+.train{position:absolute;top:50%;transform:translate(-50%,-50%);transition:left .9s cubic-bezier(.5,1.6,.5,1);font-size:clamp(20px,2.4vw,38px);filter:drop-shadow(0 3px 2px rgba(0,0,0,.2));z-index:2}
+.train .badge{position:absolute;inset:auto -6px -4px auto;width:1.1em;height:1.1em;border-radius:50%;font-size:.42em;color:#fff;display:grid;place-items:center;font-weight:900;border:2px solid #fff}
+.labels{position:relative;height:5.4vh;margin-left:calc(minmax(230px,22vw) + 1vw)}
+.labels-wrap{display:grid;grid-template-columns:minmax(230px,22vw) 1fr;gap:1vw}
+.lab{position:absolute;top:2px;transform:translateX(-50%);text-align:center;font-size:clamp(9px,.82vw,13px);font-weight:700;color:var(--muted);line-height:1.15;white-space:nowrap}
+.lab b{display:block;font-size:1.25em}
+.legend{font-size:clamp(10px,.9vw,14px);color:var(--muted);font-weight:700;display:flex;flex-direction:column;justify-content:center;gap:2px}
+
+/* stage */
+.stage{min-height:0;background:#fff;border-radius:22px;position:relative;overflow:hidden;box-shadow:0 4px 0 rgba(0,0,0,.05);display:flex;flex-direction:column}
+.mode{display:none;flex:1;min-height:0;flex-direction:column;padding:2vh 2.2vw}
+.mode.on{display:flex}
+.mhead{display:flex;align-items:baseline;gap:1vw;flex-wrap:wrap}
+.mtitle{font-family:"Baloo 2","Nunito",system-ui,sans-serif;font-weight:800;font-size:clamp(22px,2.6vw,42px);line-height:1}
+.msub{color:var(--muted);font-weight:700;font-size:clamp(12px,1.15vw,18px)}
+.ctrls{display:flex;gap:.6vw;align-items:center;margin-top:auto;flex-wrap:wrap}
+.btn{padding:.7em 1.4em;border-radius:14px;font-weight:900;font-size:clamp(13px,1.3vw,20px);background:#f3efe7;color:var(--ink)}
+.btn.main{background:var(--ink);color:#fff}
+.btn.go{background:var(--pink);color:#fff}
+.seg{display:flex;background:#f3efe7;border-radius:14px;padding:4px;gap:4px}
+.seg button{padding:.45em .9em;border-radius:10px;font-weight:900;font-size:clamp(12px,1.1vw,17px);background:transparent;color:var(--muted)}
+.seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 0 rgba(0,0,0,.1)}
+.count{margin-left:auto;font-weight:700;color:var(--muted);font-size:clamp(12px,1.1vw,17px)}
+
+/* flash */
+.card{flex:1;min-height:0;margin:1.6vh 0;border-radius:22px;background:var(--cream);display:grid;place-items:center;position:relative;overflow:hidden}
+.flashword{font-family:"Baloo 2","Nunito",system-ui,sans-serif;font-weight:800;font-size:clamp(48px,9vw,150px);letter-spacing:.02em;line-height:1}
+.hidden-q{font-family:"Baloo 2","Nunito",system-ui,sans-serif;font-weight:800;font-size:clamp(60px,10vw,170px);color:#d9d2c5}
+.flash-on{background:var(--ink);color:#fff}
+.reveal{text-align:center}
+.reveal .em{font-size:clamp(40px,6vw,90px)}
+.reveal .zh{font-size:clamp(16px,1.8vw,28px);color:var(--muted);font-weight:700;margin-top:.3em}
+
+/* iceberg */
+.ice-wrap{flex:1;margin:1.2vh 0;grid-template-rows:minmax(0,1fr);overflow:hidden;display:grid;grid-template-columns:1fr minmax(200px,22vw);gap:1.6vw;min-height:0}
+.ice{position:relative;border-radius:22px;background:linear-gradient(180deg,#eaf6fc,#d3ecf8);overflow:hidden;display:grid;place-items:center}
+.tiles{display:flex;flex-wrap:wrap;justify-content:center;gap:clamp(5px,.6vw,10px);padding:4vh 3vw;max-width:100%}
+.tile{position:relative;width:clamp(40px,5.6vw,86px);height:clamp(54px,7.4vw,112px);border-radius:12px;display:grid;place-items:center;font-family:"Baloo 2","Nunito",system-ui,sans-serif;font-weight:800;font-size:clamp(30px,4.4vw,68px);color:#1d5e85;background:#fff;box-shadow:0 4px 0 rgba(29,94,133,.25);transition:background .5s,transform .4s}
+.tile.frozen{color:transparent;background:linear-gradient(135deg,rgba(255,255,255,.7) 0 12%,transparent 12% 40%,rgba(255,255,255,.4) 40% 46%,transparent 46%),linear-gradient(160deg,#bfe6f7,#6fbde4)}
+.tile.frozen::after{content:"❄";color:rgba(255,255,255,.9);font-size:.5em;position:absolute}
+.tile.pop{transform:scale(1.15)}
+.tile.gap{width:clamp(14px,1.6vw,26px);background:none;box-shadow:none}
+.clue{font-weight:800;font-size:clamp(15px,1.45vw,23px);color:#1d5e85;line-height:1.35;min-height:2.6em;margin-top:.4vh}
+.ice .pic{font-size:clamp(80px,20vh,240px);line-height:1;transform:scale(1.3)}
+.ice .cover{position:absolute;inset:0;
+  background:
+   linear-gradient(135deg,rgba(255,255,255,.55) 0 10%,transparent 10% 30%,rgba(255,255,255,.35) 30% 34%,transparent 34% 62%,rgba(255,255,255,.45) 62% 66%,transparent 66%),
+   linear-gradient(160deg,#bfe6f7,#7cc6e8 55%,#4ea6d3);
+  transition:-webkit-mask-size .6s, mask-size .6s;
+  -webkit-mask-image:radial-gradient(circle at var(--x) var(--y),transparent var(--r),#000 calc(var(--r) + 1px));
+          mask-image:radial-gradient(circle at var(--x) var(--y),transparent var(--r),#000 calc(var(--r) + 1px));
+}
+.ice .cover.gone{display:none}
+.ice .peak{position:absolute;left:18px;top:14px;font-weight:900;color:#1d5e85;background:rgba(255,255,255,.75);padding:4px 12px;border-radius:999px;font-size:clamp(12px,1.1vw,17px)}
+.side{display:flex;flex-direction:column;gap:1vh;min-height:0;overflow:hidden}
+.stepbox{background:var(--cream);border-radius:18px;padding:1.4vh 1.2vw}
+.steps{display:flex;flex-direction:column;gap:.8vh;margin-top:.8vh}
+.step{display:flex;justify-content:space-between;align-items:center;padding:.4vh .8vw;border-radius:12px;background:#fff;font-weight:900;font-size:clamp(12px,1.15vw,18px);color:#b9b2a6}
+.step.now{background:#1d5e85;color:#fff}
+.step.done{text-decoration:line-through}
+.hint{font-family:"Baloo 2","Nunito",system-ui,sans-serif;font-weight:800;font-size:clamp(16px,1.7vw,28px);letter-spacing:.08em;white-space:nowrap;text-align:center;color:#1d5e85;min-height:1.3em}
+.answer{font-family:"Baloo 2","Nunito",system-ui,sans-serif;font-weight:800;font-size:clamp(20px,2.4vw,40px);text-align:center;color:var(--ink);min-height:1.2em}
+.lbl{font-weight:900;font-size:clamp(11px,.95vw,15px);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+
+/* speed write */
+.sentence{font-family:"Baloo 2","Nunito",system-ui,sans-serif;font-weight:700;font-size:clamp(28px,4.2vw,68px);line-height:1.2;text-align:center;padding:0 4vw}
+.bar{position:absolute;left:0;bottom:0;height:10px;background:var(--pink);width:0}
+.big-count{font-family:"Baloo 2","Nunito",system-ui,sans-serif;font-weight:800;font-size:clamp(90px,16vw,260px);color:var(--pink)}
+.rubric{display:flex;gap:.6vw;flex-wrap:wrap}
+.rubric span{background:#f3efe7;border-radius:999px;padding:.35em .9em;font-weight:900;font-size:clamp(11px,1vw,16px)}
+
+/* toast + overlays */
+.toast{position:fixed;left:50%;top:18vh;transform:translate(-50%,-20px);background:var(--ink);color:#fff;padding:.8em 1.6em;border-radius:18px;font-weight:900;font-size:clamp(16px,2vw,30px);opacity:0;transition:.35s;pointer-events:none;z-index:50;text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.overlay{position:fixed;inset:0;background:rgba(36,35,43,.72);display:none;place-items:center;z-index:60}
+.overlay.show{display:grid}
+.modal{background:#fff;border-radius:26px;padding:3.5vh 3vw;max-width:min(880px,90vw);max-height:88vh;overflow:auto}
+.modal h2{font-family:"Baloo 2","Nunito",system-ui,sans-serif;font-size:clamp(26px,3vw,46px);line-height:1.1}
+.modal ul{margin:1.4vh 0 0 1.2em;display:flex;flex-direction:column;gap:.8vh;font-size:clamp(14px,1.35vw,21px);line-height:1.4}
+.modal .zh{color:var(--muted);font-size:.85em}
+.win{text-align:center}
+.win .trophy{font-size:clamp(80px,12vw,180px)}
+canvas#conf{position:fixed;inset:0;pointer-events:none;z-index:70}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo">🚇 <div>MTR Race<small>English Team Game · P5 · Class 6: English on the MTR</small></div></div>
+    <nav class="tabs">
+      <button class="tab on" data-m="flash">⚡ Flash</button>
+      <button class="tab" data-m="ice">🧊 Iceberg</button>
+      <button class="tab" data-m="speed">✍️ Speed Write</button>
+    </nav>
+    <button class="iconbtn" id="helpBtn" title="How to play">❓</button>
+    <button class="iconbtn" id="fsBtn" title="Full screen">⛶</button>
+    <button class="iconbtn" id="resetBtn" title="New game">🔄</button>
+  </header>
+
+  <section class="board">
+    <div id="lanes"></div>
+    <div class="labels-wrap">
+      <div class="legend"><span>🟡 Express! +1</span><span>🔴 Signal fault −1</span></div>
+      <div class="labels" id="labels" style="margin-left:0"></div>
+    </div>
+  </section>
+
+  <section class="stage">
+    <!-- FLASH -->
+    <div class="mode on" id="m-flash">
+      <div class="mhead"><div class="mtitle">⚡ Flash!</div><div class="msub">Watch carefully. Write the word on your whiteboard. Correct spelling = +1</div></div>
+      <div class="card" id="flashCard"><div class="hidden-q">?</div></div>
+      <div class="ctrls">
+        <span class="lbl">Speed</span>
+        <div class="seg" id="flashSpeed"><button data-v="400">Fast</button><button class="on" data-v="800">Normal</button><button data-v="1500">Easy</button></div>
+        <button class="btn go" id="flashGo">⚡ Flash!</button>
+        <button class="btn" id="flashAgain">↺ Again</button>
+        <button class="btn main" id="flashShow">Show answer</button>
+        <button class="btn" id="flashNext">Next ▶</button>
+        <span class="count" id="flashCount"></span>
+      </div>
+    </div>
+
+    <!-- ICEBERG -->
+    <div class="mode" id="m-ice">
+      <div class="mhead"><div class="mtitle">🧊 Tip of the Iceberg</div><div class="msub">The letters are frozen! Guess the word from today's lesson. Early guess = more points.</div></div>
+      <div class="ice-wrap">
+        <div class="ice" id="ice"><div class="tiles" id="iceTiles"></div><div class="peak" id="icePeak">Melt 1 of 4</div></div>
+        <div class="side">
+          <div class="stepbox"><div class="lbl">Guess now for…</div>
+            <div class="steps" id="iceSteps">
+              <div class="step">🧊 A few letters<span>+3</span></div>
+              <div class="step">🧊 More letters<span>+2</span></div>
+              <div class="step">🧊 Almost there<span>+1</span></div>
+              <div class="step">💧 All melted<span>+0</span></div>
+            </div>
+          </div>
+          <div class="stepbox"><div class="lbl">Clue</div><div class="clue" id="iceHint"></div></div>
+          <div class="answer" id="iceAns"></div>
+        </div>
+      </div>
+      <div class="ctrls">
+        <button class="btn go" id="iceMelt">💧 Melt more</button>
+        <button class="btn" id="iceHintBtn">💡 Clue</button>
+        <button class="btn main" id="iceShow">Show answer</button>
+        <button class="btn" id="iceNext">Next ▶</button>
+        <span class="count" id="iceCount"></span>
+      </div>
+    </div>
+
+    <!-- SPEED WRITE -->
+    <div class="mode" id="m-speed">
+      <div class="mhead"><div class="mtitle">✍️ Speed Write</div><div class="msub">Read the sentence before it disappears, then write it from memory as a team.</div></div>
+      <div class="card" id="speedCard"><div class="hidden-q">✍️</div><div class="bar" id="speedBar"></div></div>
+      <div class="ctrls">
+        <span class="lbl">Time</span>
+        <div class="seg" id="speedTime"><button data-v="4000">4s</button><button class="on" data-v="6000">6s</button><button data-v="9000">9s</button></div>
+        <button class="btn go" id="speedGo">▶ Start</button>
+        <button class="btn main" id="speedShow">Show answer</button>
+        <button class="btn" id="speedNext">Next ▶</button>
+        <div class="rubric"><span>✅ Perfect +3</span><span>👍 1–2 mistakes +2</span><span>💪 Good try +1</span></div>
+        <span class="count" id="speedCount"></span>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="overlay" id="help"><div class="modal">
+  <h2>How to play 🚇</h2>
+  <ul>
+    <li><b>Make 4 teams.</b> Click a team name to change it. <span class="zh">分4組，可按隊名修改。</span></li>
+    <li><b>Race from Central to Chai Wan.</b> The first team to reach Chai Wan wins! <span class="zh">由中環出發，最先到柴灣的隊伍勝出。</span></li>
+    <li><b>Give points with the buttons</b> (−1, +1, +2, +3). The train moves by that many stations. <span class="zh">按分數鍵，列車就移動相應站數。</span></li>
+    <li>🟡 <b>Express stations</b> move you 1 more. 🔴 <b>Signal fault</b> sends you back 1. <span class="zh">黃色站加一站，紅色站退一站。</span></li>
+    <li>📚 <b>All words and sentences come from today's lesson.</b> <span class="zh">所有題目都來自今課內容。</span></li>
+    <li>⚡ <b>Flash:</b> a word flashes for a second. Every team writes it. Correct spelling +1.</li>
+    <li>🧊 <b>Iceberg:</b> the letters are frozen and melt a few at a time. Put up your hand to guess the word! The earlier you guess, the more points. Wrong guess = your team waits one turn.</li>
+    <li>✍️ <b>Speed Write:</b> remember the sentence and write it. Check spelling, capital letters and the full stop!</li>
+  </ul>
+  <div style="margin-top:2.4vh;text-align:right"><button class="btn main" id="helpClose">Let's go! 🚀</button></div>
+</div></div>
+
+<div class="overlay" id="winBox"><div class="modal win">
+  <div class="trophy">🏆</div>
+  <h2 id="winText">We have a winner!</h2>
+  <p style="margin-top:1vh;font-size:clamp(16px,1.6vw,24px);color:var(--muted);font-weight:700">Next stop: Chai Wan. This train terminates here. 🎉</p>
+  <div style="margin-top:2.4vh;display:flex;gap:1vw;justify-content:center"><button class="btn" id="winKeep">Keep playing</button><button class="btn main" id="winNew">New game</button></div>
+</div></div>
+<canvas id="conf"></canvas>
+
+<script>
+(function(){
+const STATIONS=[
+ ["Central","中環"],["Admiralty","金鐘"],["Wan Chai","灣仔"],["Causeway Bay","銅鑼灣"],["Tin Hau","天后"],["Fortress Hill","炮台山"],["North Point","北角"],["Quarry Bay","鰂魚涌"],["Tai Koo","太古"],["Sai Wan Ho","西灣河"],["Shau Kei Wan","筲箕灣"],["Heng Fa Chuen","杏花邨"],["Chai Wan","柴灣"]];
+const SPECIAL={3:{d:1,msg:"⚡ Express train! +1 station"},8:{d:1,msg:"⚡ Express train! +1 station"},6:{d:-1,msg:"🚧 Signal fault! Back 1 station"},10:{d:-1,msg:"🚧 Signal fault! Back 1 station"}};
+const LAST=STATIONS.length-1;
+const TEAMS=[{c:"#e2231a",n:"Red Team",e:"🚆"},{c:"#0075c2",n:"Blue Team",e:"🚆"},{c:"#00a040",n:"Green Team",e:"🚆"},{c:"#7e3c93",n:"Purple Team",e:"🚆"}];
+
+const FLASH=[["platform","🚉","月台"],["bound for","➡️","開往"],["interchange","🔁","轉車站"],["get off","🚪","下車"],["station","🚇","車站"],["exit","🚪","出口"],["next stop","⏭️","下一站"],["signs","🪧","指示牌"],["actually","💬","其實"],["train","🚆","列車"],["Causeway Bay","🛍️","銅鑼灣"],["Kowloon Tong","🔁","九龍塘"]];
+const ICE=[["platform","You wait for the train here."],["interchange","A station where you change to another line."],["bound for","This train is ______ Chai Wan."],["get off","Take the red line and ______ at Mong Kok."],["exit","Could you tell me where the ______ is?"],["signs","That's right! Just follow the ______."],["next stop","Is the ______ Po Lam?"],["actually","______, this train goes to LOHAS Park."],["station","Mong Kok, Causeway Bay and Po Lam are all MTR ______s."],["Causeway Bay","Do you know if this train stops at ______?"],["Kowloon Tong","The interchange for the East Rail Line."],["Chai Wan","Our race ends here! The last stop on the Island Line."]];
+const SENT=["Could you tell me how to get to Mong Kok?","Take the red line and get off at Mong Kok.","Do you know if this train stops at Causeway Bay?","Yes! It's bound for Chai Wan.","Is Kowloon Tong the interchange for the East Rail Line?","That's right! Just follow the signs.","Is the next stop Po Lam?","Actually, this train goes to LOHAS Park.","Could you tell me where the exit is?","Do you know if this train goes to Mong Kok?"];
+
+const $=s=>document.querySelector(s);
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+
+/* ---------- state ---------- */
+let state={pos:[0,0,0,0],names:TEAMS.map(t=>t.n),won:false};
+try{const s=JSON.parse(localStorage.getItem("mtrRace")||"null");if(s&&s.pos&&s.pos.length===4)state=Object.assign(state,s)}catch(e){}
+const save=()=>{try{localStorage.setItem("mtrRace",JSON.stringify(state))}catch(e){}};
+
+/* ---------- sound ---------- */
+let ac=null;
+function tone(freqs,dur=.12,type="triangle",gap=.09){
+  try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();
+    freqs.forEach((f,i)=>{const o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.value=f;
+      const t=ac.currentTime+i*gap;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.25,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+      o.connect(g).connect(ac.destination);o.start(t);o.stop(t+dur+.02)})}catch(e){}
+}
+const sUp=()=>tone([523,659,784]),sDown=()=>tone([330,247],.18,"sawtooth",.12),sFlash=()=>tone([880],.08,"square"),sWin=()=>tone([523,659,784,1047,784,1047],.18,"triangle",.13),sTick=()=>tone([660],.05,"square");
+
+/* ---------- board ---------- */
+const pct=i=>2+i*(96/LAST);
+function buildBoard(){
+  const lanes=$("#lanes");lanes.innerHTML="";
+  TEAMS.forEach((t,ti)=>{
+    const lane=document.createElement("div");lane.className="lane";
+    lane.innerHTML=`<div class="team"><span style="width:12px;height:12px;border-radius:50%;background:${t.c};flex:none"></span>
+      <span class="tname" contenteditable="true" spellcheck="false" style="color:${t.c}">${state.names[ti]}</span>
+      <div class="pts"><button data-d="-1">−1</button><button class="plus" style="background:${t.c}" data-d="1">+1</button><button class="plus" style="background:${t.c}" data-d="2">+2</button><button class="plus" style="background:${t.c}" data-d="3">+3</button></div></div>
+      <div class="track">${STATIONS.map((s,i)=>`<span class="stop ${SPECIAL[i]?(SPECIAL[i].d>0?"sp":"bad"):""} ${i===LAST?"fin":""}" style="left:${pct(i)}%"></span>`).join("")}
+      <span class="train" id="tr${ti}" style="left:${pct(state.pos[ti])}%">${t.e}<span class="badge" style="background:${t.c}">${ti+1}</span></span></div>`;
+    lanes.appendChild(lane);
+    const nm=lane.querySelector(".tname");
+    nm.addEventListener("input",()=>{state.names[ti]=nm.textContent.trim()||t.n;save()});
+    nm.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();nm.blur()}});
+    lane.querySelectorAll(".pts button").forEach(b=>b.addEventListener("click",()=>move(ti,+b.dataset.d)));
+  });
+  $("#labels").innerHTML=STATIONS.map((s,i)=>`<div class="lab" style="left:${pct(i)}%">${i===0?"🚩 ":""}${i===LAST?"🏁 ":""}${s[0]}<b>${s[1]}</b></div>`).join("");
+}
+function place(ti){$("#tr"+ti).style.left=pct(state.pos[ti])+"%"}
+function move(ti,d){
+  const before=state.pos[ti];
+  state.pos[ti]=Math.max(0,Math.min(LAST,before+d));
+  place(ti);
+  d>0?sUp():sDown();
+  const name=state.names[ti];
+  if(d>0&&state.pos[ti]===LAST){save();setTimeout(()=>win(ti),900);return}
+  const sp=SPECIAL[state.pos[ti]];
+  if(sp&&state.pos[ti]!==before){
+    setTimeout(()=>{toast(`${name}: ${sp.msg}`);state.pos[ti]=Math.max(0,Math.min(LAST,state.pos[ti]+sp.d));place(ti);sp.d>0?sUp():sDown();
+      if(state.pos[ti]===LAST)setTimeout(()=>win(ti),900);save()},950);
+  }else if(d>0){toast(`${name} → ${STATIONS[state.pos[ti]][0]} ${STATIONS[state.pos[ti]][1]}`)}
+  save();
+}
+let tt;function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("show"),1800)}
+
+function win(ti){
+  if(state.won)return;state.won=true;save();
+  $("#winText").textContent=`🎉 ${state.names[ti]} wins!`;$("#winText").style.color=TEAMS[ti].c;
+  $("#winBox").classList.add("show");sWin();confetti();
+}
+$("#winKeep").onclick=()=>{$("#winBox").classList.remove("show")};
+$("#winNew").onclick=()=>{$("#winBox").classList.remove("show");newGame()};
+function newGame(){state.pos=[0,0,0,0];state.won=false;save();TEAMS.forEach((t,i)=>place(i));toast("🚩 All aboard! Next stop: Admiralty")}
+$("#resetBtn").onclick=()=>{ if(state.pos.some(p=>p>0)){showConfirm()}else newGame() };
+function showConfirm(){
+  const o=document.createElement("div");o.className="overlay show";
+  o.innerHTML=`<div class="modal" style="text-align:center"><h2>Start a new game?</h2><p style="margin-top:1vh;color:var(--muted);font-weight:700;font-size:clamp(14px,1.4vw,20px)">All trains go back to Central.</p>
+  <div style="margin-top:2.4vh;display:flex;gap:1vw;justify-content:center"><button class="btn" data-a="no">Cancel</button><button class="btn main" data-a="yes">New game</button></div></div>`;
+  document.body.appendChild(o);
+  o.addEventListener("click",e=>{const a=e.target.dataset&&e.target.dataset.a;if(a==="yes")newGame();if(a||e.target===o)o.remove()});
+}
+
+/* ---------- tabs ---------- */
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x===b));
+  document.querySelectorAll(".mode").forEach(m=>m.classList.toggle("on",m.id==="m-"+b.dataset.m));
+});
+function seg(id){const el=$(id);el.querySelectorAll("button").forEach(b=>b.onclick=()=>{el.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b))});return()=>+el.querySelector(".on").dataset.v}
+
+/* ---------- flash ---------- */
+const flashSpeed=seg("#flashSpeed");
+let fl=shuffle(FLASH),fi=0,flTimer;
+const fc=$("#flashCard");
+function flashIdle(){fc.className="card";fc.innerHTML='<div class="hidden-q">?</div>';$("#flashCount").textContent=`Word ${fi+1} / ${fl.length}`}
+function doFlash(){
+  clearTimeout(flTimer);let n=3;fc.className="card";
+  const step=()=>{if(n>0){fc.innerHTML=`<div class="big-count">${n}</div>`;sTick();n--;flTimer=setTimeout(step,600)}
+    else{fc.className="card flash-on";fc.innerHTML=`<div class="flashword">${fl[fi][0]}</div>`;sFlash();
+      flTimer=setTimeout(()=>{fc.className="card";fc.innerHTML='<div class="hidden-q">✏️ Write it!</div>'},flashSpeed())}};
+  step();
+}
+$("#flashGo").onclick=doFlash;$("#flashAgain").onclick=doFlash;
+$("#flashShow").onclick=()=>{clearTimeout(flTimer);fc.className="card";const w=fl[fi];fc.innerHTML=`<div class="reveal"><div class="em">${w[1]}</div><div class="flashword">${w[0]}</div><div class="zh">${w[2]}</div></div>`};
+$("#flashNext").onclick=()=>{clearTimeout(flTimer);fi=(fi+1)%fl.length;if(fi===0)fl=shuffle(FLASH);flashIdle()};
+flashIdle();
+
+/* ---------- iceberg ---------- */
+let ic=shuffle(ICE),ii=0,stepI=0,order=[],hintOn=false;
+function iceLoad(){
+  stepI=0;hintOn=false;const w=ic[ii][0];
+  $("#iceTiles").innerHTML=w.split("").map((c,i)=>c===" "?'<span class="tile gap"></span>':`<span class="tile frozen" data-i="${i}">${c}</span>`).join("");
+  order=shuffle(w.split("").map((c,i)=>c===" "?-1:i).filter(i=>i>=0));
+  $("#iceAns").textContent="";$("#iceHint").textContent="";
+  iceStep();$("#iceCount").textContent=`Word ${ii+1} / ${ic.length}`;
+}
+function iceStep(){
+  const n=order.length,show=[Math.max(1,Math.round(n*.25)),Math.round(n*.5),Math.round(n*.75),n][stepI];
+  const open=new Set(order.slice(0,show));
+  document.querySelectorAll("#iceTiles .tile[data-i]").forEach(t=>{if(open.has(+t.dataset.i)&&t.classList.contains("frozen")){t.classList.remove("frozen");t.classList.add("pop");setTimeout(()=>t.classList.remove("pop"),400)}});
+  $("#icePeak").textContent=stepI>=3?"All melted!":`Melt ${stepI+1} of 4`;
+  document.querySelectorAll("#iceSteps .step").forEach((s,i)=>{s.classList.toggle("now",i===stepI);s.classList.toggle("done",i<stepI)});
+}
+$("#iceMelt").onclick=()=>{if(stepI<3){stepI++;iceStep();tone([700,500],.1,"sine",.08)}};
+$("#iceHintBtn").onclick=()=>{hintOn=!hintOn;$("#iceHint").textContent=hintOn?ic[ii][1]:""};
+$("#iceShow").onclick=()=>{stepI=3;iceStep();$("#iceAns").textContent="✅ "+ic[ii][0]};
+$("#iceNext").onclick=()=>{ii=(ii+1)%ic.length;if(ii===0)ic=shuffle(ICE);iceLoad()};
+iceLoad();
+
+/* ---------- speed write ---------- */
+const speedTime=seg("#speedTime");
+let sp=shuffle(SENT),si=0,spTimer;
+const sc=$("#speedCard");
+function speedIdle(){sc.innerHTML='<div class="hidden-q">✍️</div><div class="bar" id="speedBar"></div>';$("#speedCount").textContent=`Sentence ${si+1} / ${sp.length}`}
+$("#speedGo").onclick=()=>{
+  clearTimeout(spTimer);let n=3;
+  const step=()=>{if(n>0){sc.innerHTML=`<div class="big-count">${n}</div>`;sTick();n--;spTimer=setTimeout(step,700)}
+    else{const ms=speedTime();sc.innerHTML=`<div class="sentence">${sp[si]}</div><div class="bar" id="speedBar"></div>`;sFlash();
+      const bar=$("#speedBar");bar.style.transition="none";bar.style.width="100%";requestAnimationFrame(()=>requestAnimationFrame(()=>{bar.style.transition=`width ${ms}ms linear`;bar.style.width="0%"}));
+      spTimer=setTimeout(()=>{sc.innerHTML='<div class="hidden-q">✏️ Write it now!</div>';tone([440,330],.15,"triangle",.1)},ms)}};
+  step();
+};
+$("#speedShow").onclick=()=>{clearTimeout(spTimer);sc.innerHTML=`<div class="sentence" style="color:#0a7a3a">${sp[si]}</div>`};
+$("#speedNext").onclick=()=>{clearTimeout(spTimer);si=(si+1)%sp.length;if(si===0)sp=shuffle(SENT);speedIdle()};
+speedIdle();
+
+/* ---------- help / fullscreen ---------- */
+$("#helpBtn").onclick=()=>$("#help").classList.add("show");
+$("#helpClose").onclick=()=>$("#help").classList.remove("show");
+$("#help").addEventListener("click",e=>{if(e.target.id==="help")$("#help").classList.remove("show")});
+$("#fsBtn").onclick=()=>{try{const d=document;if(!d.fullscreenElement){const p=d.documentElement.requestFullscreen&&d.documentElement.requestFullscreen();p&&p.catch&&p.catch(()=>toast("Full screen isn't available here"))}else d.exitFullscreen()}catch(e){toast("Full screen isn't available here")}};
+
+/* ---------- confetti ---------- */
+function confetti(){
+  const cv=$("#conf"),ctx=cv.getContext("2d");cv.width=innerWidth;cv.height=innerHeight;
+  const cols=["#e2231a","#0075c2","#00a040","#7e3c93","#f5b700","#f08aa0"];
+  const ps=Array.from({length:180},()=>({x:Math.random()*cv.width,y:-20-Math.random()*cv.height*.5,vx:-2+Math.random()*4,vy:2+Math.random()*4,r:Math.random()*6.28,s:6+Math.random()*8,c:cols[Math.floor(Math.random()*cols.length)]}));
+  let f=0;(function draw(){ctx.clearRect(0,0,cv.width,cv.height);ps.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.r+=.1;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.r);ctx.fillStyle=p.c;ctx.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);ctx.restore()});
+    if(++f<260)requestAnimationFrame(draw);else ctx.clearRect(0,0,cv.width,cv.height)})();
+}
+
+buildBoard();
+let seen=false;try{seen=localStorage.getItem("mtrRaceHelp")==="1";localStorage.setItem("mtrRaceHelp","1")}catch(e){}
+if(!seen)$("#help").classList.add("show");
+})();
+</script>
+</body>
+</html>
